@@ -1,0 +1,73 @@
+{
+    "name": "nvidia-monitor",
+    "displayName": "Nvidia Monitor",
+    "description": "Displays Nvidia GPU usage in status bar.",
+    "version": "23.5.14",
+    "publisher": "ziruiwang",
+    "engines": {
+        "vscode": "^1.25.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "icon": "images/icon.png",
+    "galleryBanner": {
+        "color": "#008080",
+        "theme": "dark"
+    },
+    "activationEvents": [
+        "*"
+    ],
+    "main": "./out/extension",
+    "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "Nvidia Monitor",
+            "properties": {
+                "nvidiaMonitor.alignLeft": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggles the alignment of the status bar."
+                },
+                "nvidiaMonitor.updateFrequencyMs": {
+                    "type": "number",
+                    "default": 500,
+                    "minimum": 200,
+                    "maximum": 5000,
+                    "description": "How long in ms between updates to resources."
+                },
+                "nvidiaMonitor.color": {
+                    "type": "string",
+                    "default": "#FFFFFF",
+                    "description": "Color of the status bar text in hex code (for example, #FFFFFF is white). The color must be in the format #RRGGBB, using hex digits."
+                },
+                "nvidiaMonitor.showSum": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Toggles the display of the sum of all GPUs. Useful when you have more than 4 GPUs or prefer a compact display."
+                }
+            }
+        }
+    },
+    "repository": {
+        "url": "https://github.com/ziruiw-dev/nvmon.git"
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "watch": "tsc -watch -p ./"
+    },
+    "dependencies": {
+        "child-process-promise": "^2.2.1",
+        "fast-xml-parser": "^4.2.2",
+        "watch": "^1.0.2"
+    },
+    "devDependencies": {
+        "@types/mocha": "^2.2.42",
+        "@types/node": "^7.0.43",
+        "tslint": "^5.8.0",
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.6"
+    }
+}
