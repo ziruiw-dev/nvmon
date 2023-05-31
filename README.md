@@ -20,12 +20,16 @@ Multi GPU sum:
 - `alignLeft`: Toggles the alignment of the status bar.
 - `color`: Color of the status bar text in hex code (for example, #FFFFFF is white). The color must be in the format #RRGGBB, using hex digits.
 
+## Known Issues
+- ~~This plug-in might freeze occationally. Reload window should fix it for now (In vscode press `Ctrl/Cmd` + `Shift` + `p` to call command platte and type `reload`). Will dig into this later.~~
+
 ## TODO
+- [x] Fix plug-in frozen issue.
 - [ ] Update packages and dependencies to modern versions.
 
 ## Change Log
-### [23.5.14]
-- Initial release
+- 2023.05.14 - Initial release
+- 2023.07.05 - Get rid of a bug that causes the plug-in to freeze.
 
 ## Acknowledgements
 This toy is built on top of the amazing tool [resource monitor](https://github.com/Njanderson/resmon).

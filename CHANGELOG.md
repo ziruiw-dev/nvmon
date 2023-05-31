@@ -1,3 +1,3 @@
 # Change Log
-## [23.5.14]
-- Initial release
+- 2023.05.14 - Initial release
+- 2023.07.05 - Get rid of a bug that causes the plug-in to freeze.

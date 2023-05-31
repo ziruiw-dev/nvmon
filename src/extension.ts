@@ -50,19 +50,26 @@ class GpuUsage extends Resource {
     }
 
     async getDisplay(): Promise<string> {
-        let res_xml = await exec(nvidia_cmd, { timeout: 999 })
-        let res = xml_parser.parse(res_xml.stdout).nvidia_smi_log;
+        let res_xml = null;
+        let disp_str = 'nvmonErr';
 
-        let N_gpu = res['attached_gpus'];
-        if (N_gpu == 0) {
-            return 'No Nvidia GPU';
+        try {
+            res_xml = await exec(nvidia_cmd, { timeout: 2000 });
+        } catch (error) {
+            console.error('Error getting results from nvidia-smi. Error: ', error);
         }
-        else if (N_gpu == 1) {
+
+        if (res_xml == null) {
+            return disp_str
+        }
+
+        let res = xml_parser.parse(res_xml.stdout).nvidia_smi_log;
+        let N_gpu = res['attached_gpus'];
+        if (N_gpu == 1) {
             res.gpu = [res.gpu];
         }
         
         let show_sum = this._config.get('showSum', false);
-        var disp_str = '';
         if (show_sum) {
             let gpu_util_sum = 0;
             let mem_used_sum = 0;
