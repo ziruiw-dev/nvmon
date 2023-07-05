@@ -2,7 +2,7 @@
     "name": "nvidia-monitor",
     "displayName": "Nvidia Monitor",
     "description": "Displays Nvidia GPU usage in status bar.",
-    "version": "23.7.5",
+    "version": "23.7.6",
     "publisher": "ziruiwang",
     "engines": {
         "vscode": "^1.25.0"
@@ -35,11 +35,6 @@
                     "minimum": 200,
                     "maximum": 5000,
                     "description": "How long in ms between updates to resources."
-                },
-                "nvidiaMonitor.color": {
-                    "type": "string",
-                    "default": "#FFFFFF",
-                    "description": "Color of the status bar text in hex code (for example, #FFFFFF is white). The color must be in the format #RRGGBB, using hex digits."
                 },
                 "nvidiaMonitor.showSum": {
                     "type": "boolean",

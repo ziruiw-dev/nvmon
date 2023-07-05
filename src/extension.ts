@@ -114,7 +114,6 @@ class ResMon {
         this._delimiter = "    ";
         this._updating = false;
         this._statusBarItem = window.createStatusBarItem(this._config.get('alignLeft') ? StatusBarAlignment.Left : StatusBarAlignment.Right);
-        this._statusBarItem.color = this._getColor();
         this._statusBarItem.show();
 
         // Add all resources to monitor
@@ -131,19 +130,6 @@ class ResMon {
         this._updating = false;
     }
     
-    private _getColor() : string {
-        const defaultColor = "#FFFFFF";
-
-        // Enforce #RRGGBB format
-        let hexColorCodeRegex = /^#[0-9A-F]{6}$/i;
-        let configColor = this._config.get('color', defaultColor);
-        if (!hexColorCodeRegex.test(configColor)) {
-            configColor = defaultColor;
-        }
-
-        return configColor;
-    }
-
     private async update() {
         if (this._updating) {
 
@@ -158,10 +144,7 @@ class ResMon {
             if (proposedAlignment !== this._statusBarItem.alignment) {
                 this._statusBarItem.dispose();
                 this._statusBarItem = window.createStatusBarItem(proposedAlignment);
-                this._statusBarItem.color = this._getColor();
                 this._statusBarItem.show();
-            } else {
-                this._statusBarItem.color = this._getColor();
             }
 
             // Get the display of the requested resources
