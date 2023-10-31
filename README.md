@@ -25,6 +25,9 @@ Multi GPU sum:
 ## TODO
 - [x] Fix plug-in frozen issue.
 - [x] Automatic change text colour based on status bar colour.
+- [ ] Add an option to show selected GPUs only.
+- [ ] Add an option to show temperature.
+- [ ] Add back the option to customise font colour.
 - [ ] Update packages and dependencies to modern versions.
 - [ ] Make icon configurable.
 
