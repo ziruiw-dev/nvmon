@@ -85,7 +85,7 @@ class GpuUsage extends Resource {
             }
             let gpu_util_sum_str = gpu_util_sum.toString().padStart(3, ' ');
             let mem_used_sum_str = mem_used_sum.toString().padStart(3, ' ');
-            disp_str = `⚡️GPU: ${gpu_util_sum_str}%・${mem_used_sum_str}/${mem_total_sum}G・❄️${temp_current_sum}/${temp_target_sum}C'`;
+            disp_str = `⚡️GPU: ${gpu_util_sum_str}%・${mem_used_sum_str}/${mem_total_sum}G・❄️${temp_current_sum}/${temp_target_sum}°C'`;
         }
         else {
             const disp_arr: string[] = [];
@@ -99,7 +99,7 @@ class GpuUsage extends Resource {
                 const temp_current = Math.round(res.gpu[gpu_i].temperature.gpu_temp.replace(' C', ''));
                 const temp_target = Math.round(res.gpu[gpu_i].temperature.gpu_target_temperature.replace(' C', ''));
 
-                let str_i = `⚡️G${gpu_i}: ${gpu_util}%・${mem_used}/${mem_total}G・❄️${temp_current}/${temp_target}C'`;
+                let str_i = `⚡️G${gpu_i}: ${gpu_util}%・${mem_used}/${mem_total}G・❄️${temp_current}/${temp_target}°C`;
                 disp_arr.push(str_i);
             }
             disp_str = disp_arr.join('  ');

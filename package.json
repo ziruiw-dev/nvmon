@@ -1,8 +1,8 @@
 {
-    "name": "nvidia-monitor",
-    "displayName": "Nvidia Monitor",
+    "name": "nvidia-monitor-temp",
+    "displayName": "Nvidia Monitor with Temp",
     "description": "Displays Nvidia GPU usage in status bar.",
-    "version": "23.7.6",
+    "version": "23.8.7",
     "publisher": "ziruiwang",
     "engines": {
         "vscode": "^1.25.0"
@@ -56,13 +56,13 @@
     "dependencies": {
         "child-process-promise": "^2.2.1",
         "fast-xml-parser": "^4.2.2",
-        "watch": "^1.0.2"
+        "watch": "^0.13.0"
     },
     "devDependencies": {
         "@types/mocha": "^2.2.42",
         "@types/node": "^7.0.43",
         "tslint": "^5.8.0",
-        "typescript": "^2.6.1",
+        "typescript": "^2.9.2",
         "vscode": "^1.1.6"
     }
 }
