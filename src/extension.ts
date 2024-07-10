@@ -83,9 +83,11 @@ class GpuUsage extends Resource {
                 temp_current_sum += Math.round(res.gpu[gpu_i].temperature.gpu_temp.replace(' C', ''));
                 temp_target_sum += Math.round(res.gpu[gpu_i].temperature.gpu_target_temperature.replace(' C', ''));
             }
+            temp_current_sum = Math.round(temp_current_sum/N_gpu);
+            temp_target_sum = Math.round(temp_target_sum/N_gpu);
             let gpu_util_sum_str = gpu_util_sum.toString().padStart(3, ' ');
             let mem_used_sum_str = mem_used_sum.toString().padStart(3, ' ');
-            disp_str = `⚡️GPU: ${gpu_util_sum_str}%・${mem_used_sum_str}/${mem_total_sum}G・❄️${temp_current_sum}/${temp_target_sum}°C'`;
+            disp_str = `⚡️GPU: ${gpu_util_sum_str}%・${mem_used_sum_str}/${mem_total_sum}G・${temp_current_sum}/${temp_target_sum}°C'`;
         }
         else {
             const disp_arr: string[] = [];
@@ -93,13 +95,13 @@ class GpuUsage extends Resource {
                 res.gpu[gpu_i].utilization.gpu_util = res.gpu[gpu_i].utilization.gpu_util.replace(' %', '');
 
                 // pading ' ' doesn't work, the string has same number of chars, but display result depends on text font.
-                const gpu_util = parseInt(res.gpu[gpu_i].utilization.gpu_util.replace(' %', '')).toString().padStart(3, '~');
-                const mem_used = Math.round(res.gpu[gpu_i].fb_memory_usage.used.replace(' MiB', '')/1024).toString().padStart(2, '~');
+                const gpu_util = parseInt(res.gpu[gpu_i].utilization.gpu_util.replace(' %', '')).toString().padStart(3, ' ');
+                const mem_used = Math.round(res.gpu[gpu_i].fb_memory_usage.used.replace(' MiB', '')/1024).toString().padStart(2, ' ');
                 const mem_total = Math.round(res.gpu[gpu_i].fb_memory_usage.total.replace(' MiB', '')/1024);
                 const temp_current = Math.round(res.gpu[gpu_i].temperature.gpu_temp.replace(' C', ''));
                 const temp_target = Math.round(res.gpu[gpu_i].temperature.gpu_target_temperature.replace(' C', ''));
 
-                let str_i = `⚡️G${gpu_i}: ${gpu_util}%・${mem_used}/${mem_total}G・❄️${temp_current}/${temp_target}°C`;
+                let str_i = `⚡️G${gpu_i}: ${gpu_util}%・${mem_used}/${mem_total}G・${temp_current}/${temp_target}°C`;
                 disp_arr.push(str_i);
             }
             disp_str = disp_arr.join('  ');
