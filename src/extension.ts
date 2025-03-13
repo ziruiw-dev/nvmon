@@ -1,10 +1,11 @@
 'use strict';
 import { window, ExtensionContext, StatusBarAlignment, StatusBarItem, workspace, WorkspaceConfiguration } from 'vscode';
-const { XMLParser} = require("fast-xml-parser");
+import { XMLParser } from "fast-xml-parser";
+import execa = require("execa");
 
 const xml_parser = new XMLParser();
-const exec = require("child-process-promise").exec;
-const nvidia_cmd = `nvidia-smi -q -x`;
+const nvidia_cmd = 'nvidia-smi';
+const nvidia_args = ['-q', '-x'];
 
 export function activate(context: ExtensionContext) {
     var resourceMonitor: ResMon = new ResMon();
@@ -54,7 +55,8 @@ class GpuUsage extends Resource {
         let disp_str = 'nvmonErr';
 
         try {
-            res_xml = await exec(nvidia_cmd, { timeout: 2000 });
+            const { stdout } = await execa(nvidia_cmd, nvidia_args, { timeout: 2000 });
+            res_xml = { stdout };
         } catch (error) {
             console.error('Error getting results from nvidia-smi. Error: ', error);
         }

@@ -25,16 +25,17 @@ Multi GPU sum:
 ## TODO
 - [x] Fix plug-in frozen issue.
 - [x] Automatic change text colour based on status bar colour.
+- [x] Update packages to modern versions.
 - [ ] Add an option to show selected GPUs only.
 - [ ] Add an option to show temperature.
 - [ ] Add back the option to customise font colour.
-- [ ] Update packages and dependencies to modern versions.
 - [ ] Make icon configurable.
 
 ## Change Log
 - 2023.05.14 - Initial release
 - 2023.07.05 - Get rid of a bug that causes the plug-in to freeze.
 - 2023.07.06 - Automatic change text colour based on status bar colour.
+- 2025.03.13 - Update dependencies to modern versions.
 
 ## Acknowledgements
 This toy is built on top of the amazing tool [resource monitor](https://github.com/Njanderson/resmon).

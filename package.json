@@ -2,10 +2,10 @@
     "name": "nvidia-monitor",
     "displayName": "Nvidia Monitor",
     "description": "Displays Nvidia GPU usage in status bar.",
-    "version": "23.7.6",
+    "version": "25.3.13",
     "publisher": "ziruiwang",
     "engines": {
-        "vscode": "^1.25.0"
+        "vscode": "^1.60.0"
     },
     "categories": [
         "Other"
@@ -16,7 +16,7 @@
         "theme": "dark"
     },
     "activationEvents": [
-        "*"
+        "onStartupFinished"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -50,19 +50,20 @@
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install",
         "watch": "tsc -watch -p ./"
     },
     "dependencies": {
-        "child-process-promise": "^2.2.1",
+        "execa": "^5.1.1",
         "fast-xml-parser": "^4.2.2",
-        "watch": "^1.0.2"
+        "glob": "^10.3.10"
     },
     "devDependencies": {
-        "@types/mocha": "^2.2.42",
-        "@types/node": "^7.0.43",
-        "tslint": "^5.8.0",
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.6"
+        "@types/mocha": "^10.0.6",
+        "@types/node": "^20.11.19",
+        "@types/vscode": "^1.60.0",
+        "typescript": "^5.3.3"
+    },
+    "overrides": {
+        "cross-spawn": "^7.0.3"
     }
 }
