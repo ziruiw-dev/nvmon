@@ -3,3 +3,4 @@
 - 2023.07.05 - Get rid of a bug that causes the plug-in to freeze.
 - 2023.07.06 - Automatic change text colour based on status bar colour.
 - 2025.03.13 - Update dependencies to modern versions.
+- 2025.05.02 - Add configurable timeout for nvidia-smi command and improve error messages.

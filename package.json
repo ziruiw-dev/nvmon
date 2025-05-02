@@ -2,7 +2,7 @@
     "name": "nvidia-monitor",
     "displayName": "Nvidia Monitor",
     "description": "Displays Nvidia GPU usage in status bar.",
-    "version": "25.3.13",
+    "version": "25.5.2",
     "publisher": "ziruiwang",
     "engines": {
         "vscode": "^1.60.0"
@@ -40,6 +40,13 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Toggles the display of the sum of all GPUs. Useful when you have more than 4 GPUs or prefer a compact display."
+                },
+                "nvidiaMonitor.commandTimeoutMs": {
+                    "type": "number",
+                    "default": 2000,
+                    "minimum": 500,
+                    "maximum": 10000,
+                    "description": "Timeout in milliseconds for the nvidia-smi command. If the command takes longer than this, it will be considered failed."
                 }
             }
         }

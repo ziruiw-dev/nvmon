@@ -52,12 +52,14 @@ class GpuUsage extends Resource {
 
     async getDisplay(): Promise<string> {
         let res_xml = null;
-        let disp_str = 'nvmonErr';
+        let disp_str = 'nvmonErr (unknown)';
 
         try {
-            const { stdout } = await execa(nvidia_cmd, nvidia_args, { timeout: 2000 });
+            const timeout = this._config.get('commandTimeoutMs', 2000);
+            const { stdout } = await execa(nvidia_cmd, nvidia_args, { timeout });
             res_xml = { stdout };
         } catch (error) {
+            disp_str = 'nvmonErr (timeout)';
             console.error('Error getting results from nvidia-smi. Error: ', error);
         }
 
