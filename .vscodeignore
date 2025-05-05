@@ -8,3 +8,7 @@ private/**
 tsconfig.json
 vsc-extension-quickstart.md
 tslint.json
+.yarnrc
+**/.eslintrc.json
+**/*.ts
+!src/gpu_info.py

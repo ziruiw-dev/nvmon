@@ -1,13 +1,65 @@
 'use strict';
 import { window, ExtensionContext, StatusBarAlignment, StatusBarItem, workspace, WorkspaceConfiguration } from 'vscode';
-import { XMLParser } from "fast-xml-parser";
 import execa = require("execa");
+import * as path from 'path';
 
-const xml_parser = new XMLParser();
-const nvidia_cmd = 'nvidia-smi';
-const nvidia_args = ['-q', '-x'];
+let python_cmd = 'python3';
+let python_args: string[] = [];
 
-export function activate(context: ExtensionContext) {
+async function checkDependencies(): Promise<boolean> {
+    try {
+        // Get Python command from config
+        python_cmd = workspace.getConfiguration('nvidiaMonitor').get('pythonCommand', 'python3');
+        
+        // Check Python version
+        const { stdout: pythonVersion } = await execa(python_cmd, ['--version']);
+        console.log('Python version:', pythonVersion);
+
+        // Check if PyNVML is installed
+        await execa(python_cmd, ['-c', 'import pynvml']);
+        return true;
+    } catch (error: any) {
+        if (error?.message?.includes('Command failed')) {
+            if (error?.message?.includes('--version')) {
+                window.showErrorMessage(
+                    'Python 3 is not installed. Please install Python 3 from https://www.python.org/downloads/',
+                    'Open Python Download Page'
+                ).then(selection => {
+                    if (selection === 'Open Python Download Page') {
+                        execa('open', ['https://www.python.org/downloads/']);
+                    }
+                });
+            } else if (error?.message?.includes('import pynvml')) {
+                window.showErrorMessage(
+                    'PyNVML is not installed. Please install it using: pip3 install pynvml',
+                    'Install PyNVML'
+                ).then(async selection => {
+                    if (selection === 'Install PyNVML') {
+                        try {
+                            await execa('pip3', ['install', 'pynvml']);
+                            window.showInformationMessage('PyNVML installed successfully. Please reload VS Code.');
+                        } catch (installError: any) {
+                            window.showErrorMessage(`Failed to install PyNVML: ${installError?.message || 'Unknown error'}`);
+                        }
+                    }
+                });
+            }
+        }
+        return false;
+    }
+}
+
+export async function activate(context: ExtensionContext) {
+    // Check dependencies first
+    const dependenciesOk = await checkDependencies();
+    if (!dependenciesOk) {
+        return;
+    }
+
+    // Set up the Python script path
+    const scriptPath = path.join(context.extensionPath, 'src', 'gpu_info.py');
+    python_args = [scriptPath];
+    
     var resourceMonitor: ResMon = new ResMon();
     resourceMonitor.StartUpdating();
     context.subscriptions.push(resourceMonitor);
@@ -51,23 +103,23 @@ class GpuUsage extends Resource {
     }
 
     async getDisplay(): Promise<string> {
-        let res_xml = null;
+        let res_json = null;
         let disp_str = 'nvmonErr (unknown)';
 
         try {
             const timeout = this._config.get('commandTimeoutMs', 2000);
-            const { stdout } = await execa(nvidia_cmd, nvidia_args, { timeout });
-            res_xml = { stdout };
+            const { stdout } = await execa(python_cmd, python_args, { timeout });
+            res_json = { stdout };
         } catch (error) {
             disp_str = 'nvmonErr (timeout)';
-            console.error('Error getting results from nvidia-smi. Error: ', error);
+            console.error('Error getting results from PyNVML. Error: ', error);
         }
 
-        if (res_xml == null) {
+        if (res_json == null) {
             return disp_str
         }
 
-        let res = xml_parser.parse(res_xml.stdout).nvidia_smi_log;
+        let res = JSON.parse(res_json.stdout).nvidia_smi_log;
         let N_gpu = res['attached_gpus'];
         if (N_gpu == 1) {
             res.gpu = [res.gpu];

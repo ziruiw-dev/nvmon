@@ -2,7 +2,7 @@
     "name": "nvidia-monitor",
     "displayName": "Nvidia Monitor",
     "description": "Displays Nvidia GPU usage in status bar.",
-    "version": "25.5.2",
+    "version": "25.5.5",
     "publisher": "ziruiwang",
     "engines": {
         "vscode": "^1.60.0"
@@ -32,7 +32,7 @@
                 "nvidiaMonitor.updateFrequencyMs": {
                     "type": "number",
                     "default": 500,
-                    "minimum": 200,
+                    "minimum": 100,
                     "maximum": 5000,
                     "description": "How long in ms between updates to resources."
                 },
@@ -44,9 +44,9 @@
                 "nvidiaMonitor.commandTimeoutMs": {
                     "type": "number",
                     "default": 2000,
-                    "minimum": 500,
-                    "maximum": 10000,
-                    "description": "Timeout in milliseconds for the nvidia-smi command. If the command takes longer than this, it will be considered failed."
+                    "minimum": 100,
+                    "maximum": 5000,
+                    "description": "Timeout in milliseconds for the GPU info command. If the command takes longer than this, it will be considered failed."
                 }
             }
         }
@@ -57,11 +57,11 @@
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./"
+        "watch": "tsc -watch -p ./",
+        "postinstall": "pip install pynvml"
     },
     "dependencies": {
         "execa": "^5.1.1",
-        "fast-xml-parser": "^4.2.2",
         "glob": "^10.3.10"
     },
     "devDependencies": {

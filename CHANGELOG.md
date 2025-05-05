@@ -4,3 +4,4 @@
 - 2023.07.06 - Automatic change text colour based on status bar colour.
 - 2025.03.13 - Update dependencies to modern versions.
 - 2025.05.02 - Add configurable timeout for nvidia-smi command and improve error messages.
+- 2025.05.03 - Switch from nvidia-smi to PyNVML for better performance.
