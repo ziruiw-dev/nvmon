@@ -12,3 +12,6 @@ tslint.json
 **/.eslintrc.json
 **/*.ts
 !src/gpu_info.py
+.claude/**
+CLAUDE.md
+TODO.md

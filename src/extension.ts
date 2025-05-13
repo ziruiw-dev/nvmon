@@ -1,68 +1,234 @@
 'use strict';
-import { window, ExtensionContext, StatusBarAlignment, StatusBarItem, workspace, WorkspaceConfiguration } from 'vscode';
+import { window, ExtensionContext, StatusBarAlignment, StatusBarItem, workspace, WorkspaceConfiguration, OutputChannel } from 'vscode';
+import { XMLParser } from "fast-xml-parser";
 import execa = require("execa");
 import * as path from 'path';
 
-let python_cmd = 'python3';
+const xml_parser = new XMLParser();
+let python_cmd = 'python';
 let python_args: string[] = [];
+let useNvidiaSmi = false;
+let outputChannel: OutputChannel;
+
 
 async function checkDependencies(): Promise<boolean> {
+    outputChannel.appendLine('\n--- Checking GPU Monitoring Dependencies ---');
+    
+    // Try PyNVML first (preferred method)
+    outputChannel.appendLine('🔍 Checking PyNVML availability...');
+    const pyNVMLResult = await tryPyNVML();
+    
+    if (pyNVMLResult) {
+        outputChannel.appendLine('✅ Using PyNVML for GPU monitoring (optimal performance)');
+        return true;
+    }
+    
+    // Try nvidia-smi as fallback
+    outputChannel.appendLine('🔍 PyNVML not available, checking nvidia-smi fallback...');
+    const nvidiaSmiResult = await tryNvidiaSmi();
+    
+    if (nvidiaSmiResult) {
+        useNvidiaSmi = true;
+        outputChannel.appendLine('✅ Using nvidia-smi for GPU monitoring (fallback mode)');
+        
+        // Offer PyNVML installation even when nvidia-smi works (since PyNVML is preferred)
+        const pythonAvailable = await checkPythonOnly();
+        const dontAsk = workspace.getConfiguration('nvidiaMonitor').get('suppressInstallPrompts', false);
+        
+        if (pythonAvailable && !dontAsk) {
+            outputChannel.appendLine('💡 Python detected - offering PyNVML upgrade for better performance');
+            const promptMessage = 'GPU monitoring is working with nvidia-smi. Install PyNVML for better performance?';
+            const option1 = 'Install PyNVML';
+            const option2 = 'Keep Current Setup';
+            const option3 = 'Don\'t Ask Again';
+            
+            outputChannel.appendLine(`📋 Showing user prompt: "${promptMessage}"`);
+            outputChannel.appendLine(`📋 Available options: ["${option1}", "${option2}", "${option3}"]`);
+            
+            window.showInformationMessage(promptMessage, option1, option2, option3).then(selection => {
+                if (selection) {
+                    outputChannel.appendLine(`✅ User clicked: "${selection}"`);
+                    if (selection === option1) {
+                        outputChannel.appendLine('🚀 User chose to install PyNVML - proceeding with installation');
+                        attemptPyNVMLInstall();
+                    } else if (selection === option2) {
+                        outputChannel.appendLine('ℹ️ User chose to keep current nvidia-smi setup');
+                    } else if (selection === option3) {
+                        outputChannel.appendLine('🔕 User chose to stop future installation prompts');
+                        workspace.getConfiguration('nvidiaMonitor').update('suppressInstallPrompts', true, 1);
+                    }
+                } else {
+                    outputChannel.appendLine('❌ User dismissed prompt without selection');
+                }
+            });
+        } else if (pythonAvailable && dontAsk) {
+            outputChannel.appendLine('🔕 Python available but user chose not to be asked about PyNVML installation');
+        } else {
+            outputChannel.appendLine('ℹ️ Python not available for PyNVML upgrade');
+        }
+        
+        return true;
+    }
+    
+    // Neither method available
+    outputChannel.appendLine('❌ Neither PyNVML nor nvidia-smi is available');
+    const errorMessage = 'GPU monitoring unavailable. Please install Python with PyNVML or ensure nvidia-smi is in PATH.';
+    const errorOption1 = 'Install PyNVML';
+    const errorOption2 = 'Learn More';
+    
+    outputChannel.appendLine(`📋 Showing error prompt: "${errorMessage}"`);
+    outputChannel.appendLine(`📋 Available options: ["${errorOption1}", "${errorOption2}"]`);
+    
+    window.showErrorMessage(errorMessage, errorOption1, errorOption2).then(selection => {
+        if (selection) {
+            outputChannel.appendLine(`✅ User clicked: "${selection}"`);
+            if (selection === errorOption1) {
+                outputChannel.appendLine('🚀 User chose to install PyNVML from error dialog - proceeding with installation');
+                attemptPyNVMLInstall();
+            } else if (selection === errorOption2) {
+                outputChannel.appendLine('📖 User chose Learn More - showing additional information');
+                const learnMoreMessage = 'This extension requires either PyNVML (preferred) or nvidia-smi. PyNVML provides better performance and reliability.';
+                outputChannel.appendLine(`📋 Showing info dialog: "${learnMoreMessage}"`);
+                window.showInformationMessage(learnMoreMessage);
+            }
+        } else {
+            outputChannel.appendLine('❌ User dismissed error prompt without selection');
+        }
+    });
+    
+    return false;
+}
+
+async function tryPyNVML(): Promise<boolean> {
     try {
-        // Get Python command from config
-        python_cmd = workspace.getConfiguration('nvidiaMonitor').get('pythonCommand', 'python3');
+        const cmd = 'python';
+        outputChannel.appendLine(`  📋 Trying Python command: ${cmd}`);
         
         // Check Python version
-        const { stdout: pythonVersion } = await execa(python_cmd, ['--version']);
-        console.log('Python version:', pythonVersion);
-
+        const { stdout: pythonVersion } = await execa(cmd, ['--version']);
+        outputChannel.appendLine(`  ✅ Python found: ${pythonVersion.trim()}`);
+        
         // Check if PyNVML is installed
-        await execa(python_cmd, ['-c', 'import pynvml']);
+        await execa(cmd, ['-c', 'import pynvml']);
+        outputChannel.appendLine(`  ✅ PyNVML import successful`);
+        
+        python_cmd = cmd;
         return true;
-    } catch (error: any) {
-        if (error?.message?.includes('Command failed')) {
-            if (error?.message?.includes('--version')) {
-                window.showErrorMessage(
-                    'Python 3 is not installed. Please install Python 3 from https://www.python.org/downloads/',
-                    'Open Python Download Page'
-                ).then(selection => {
-                    if (selection === 'Open Python Download Page') {
-                        execa('open', ['https://www.python.org/downloads/']);
-                    }
-                });
-            } else if (error?.message?.includes('import pynvml')) {
-                window.showErrorMessage(
-                    'PyNVML is not installed. Please install it using: pip3 install pynvml',
-                    'Install PyNVML'
-                ).then(async selection => {
-                    if (selection === 'Install PyNVML') {
-                        try {
-                            await execa('pip3', ['install', 'pynvml']);
-                            window.showInformationMessage('PyNVML installed successfully. Please reload VS Code.');
-                        } catch (installError: any) {
-                            window.showErrorMessage(`Failed to install PyNVML: ${installError?.message || 'Unknown error'}`);
-                        }
-                    }
-                });
-            }
-        }
+    } catch (error) {
+        outputChannel.appendLine(`  ❌ python failed: ${error}`);
         return false;
     }
 }
 
+async function tryNvidiaSmi(): Promise<boolean> {
+    try {
+        outputChannel.appendLine(`  📋 Testing nvidia-smi command...`);
+        const result = await execa('nvidia-smi', ['-q', '-x'], { timeout: 5000 });
+        outputChannel.appendLine(`  ✅ nvidia-smi working (output length: ${result.stdout.length} chars)`);
+        return true;
+    } catch (error) {
+        outputChannel.appendLine(`  ❌ nvidia-smi failed: ${error}`);
+        return false;
+    }
+}
+
+async function checkPythonOnly(): Promise<boolean> {
+    try {
+        outputChannel.appendLine(`  📋 Checking python availability...`);
+        const { stdout: pythonVersion } = await execa('python', ['--version']);
+        outputChannel.appendLine(`  ✅ Found: ${pythonVersion.trim()}`);
+        return true;
+    } catch (error) {
+        outputChannel.appendLine(`  ❌ python not available`);
+        return false;
+    }
+}
+
+async function checkPipAvailability(): Promise<boolean> {
+    try {
+        outputChannel.appendLine(`  📋 Checking pip availability...`);
+        const { stdout } = await execa('pip', ['--version']);
+        outputChannel.appendLine(`  ✅ Found: ${stdout.trim()}`);
+        return true;
+    } catch (error) {
+        outputChannel.appendLine(`  ❌ pip not available`);
+        return false;
+    }
+}
+
+async function attemptPyNVMLInstall(): Promise<void> {
+    outputChannel.appendLine('\n--- Attempting PyNVML Installation ---');
+    
+    // First check if pip is available
+    outputChannel.appendLine('🔍 Checking pip availability...');
+    const pipAvailable = await checkPipAvailability();
+    
+    if (!pipAvailable) {
+        const noPipMessage = 'Cannot install PyNVML: pip not found. Please install pip first.';
+        outputChannel.appendLine(`❌ ${noPipMessage}`);
+        outputChannel.appendLine(`📋 Showing error message: "${noPipMessage}"`);
+        window.showErrorMessage(noPipMessage);
+        return;
+    }
+    
+    try {
+        const installCommand = 'pip install pynvml';
+        outputChannel.appendLine(`📦 Executing command: ${installCommand}`);
+        outputChannel.appendLine('⏳ Installation in progress...');
+        
+        const result = await execa('pip', ['install', 'pynvml']);
+        
+        outputChannel.appendLine(`✅ pip exit code: 0`);
+        outputChannel.appendLine(`📋 pip stdout: ${result.stdout}`);
+        if (result.stderr) {
+            outputChannel.appendLine(`📋 pip stderr: ${result.stderr}`);
+        }
+        
+        const successMessage = 'PyNVML installed successfully. Please reload VS Code to use the improved GPU monitoring.';
+        outputChannel.appendLine(`📋 Showing success message: "${successMessage}"`);
+        window.showInformationMessage(successMessage);
+        
+    } catch (error: any) {
+        outputChannel.appendLine(`❌ pip installation failed with exit code: ${error?.exitCode || 'unknown'}`);
+        outputChannel.appendLine(`❌ Error message: ${error?.message || 'Unknown error'}`);
+        if (error?.stdout) {
+            outputChannel.appendLine(`📋 Error stdout: ${error.stdout}`);
+        }
+        if (error?.stderr) {
+            outputChannel.appendLine(`📋 Error stderr: ${error.stderr}`);
+        }
+        
+        const errorMessage = `Failed to install PyNVML: ${error?.message || 'Unknown error'}. Falling back to nvidia-smi if available.`;
+        outputChannel.appendLine(`📋 Showing error message: "${errorMessage}"`);
+        window.showErrorMessage(errorMessage);
+    }
+}
+
 export async function activate(context: ExtensionContext) {
+    // Create output channel for logging
+    outputChannel = window.createOutputChannel('Nvidia Monitor');
+    context.subscriptions.push(outputChannel);
+    
+    outputChannel.appendLine('=== Nvidia Monitor Extension Starting ===');
+    outputChannel.appendLine(`Extension path: ${context.extensionPath}`);
+    
     // Check dependencies first
     const dependenciesOk = await checkDependencies();
     if (!dependenciesOk) {
+        outputChannel.appendLine('❌ Dependency check failed - extension will not start');
         return;
     }
 
     // Set up the Python script path
     const scriptPath = path.join(context.extensionPath, 'src', 'gpu_info.py');
     python_args = [scriptPath];
+    outputChannel.appendLine(`Python script path: ${scriptPath}`);
     
     var resourceMonitor: ResMon = new ResMon();
     resourceMonitor.StartUpdating();
     context.subscriptions.push(resourceMonitor);
+    
+    outputChannel.appendLine('✅ Nvidia Monitor extension activated successfully');
 }
 
 abstract class Resource {
@@ -103,6 +269,14 @@ class GpuUsage extends Resource {
     }
 
     async getDisplay(): Promise<string> {
+        if (useNvidiaSmi) {
+            return this.getDisplayFromNvidiaSmi();
+        } else {
+            return this.getDisplayFromPyNVML();
+        }
+    }
+    
+    async getDisplayFromPyNVML(): Promise<string> {
         let res_json = null;
         let disp_str = 'nvmonErr (unknown)';
 
@@ -112,20 +286,61 @@ class GpuUsage extends Resource {
             res_json = { stdout };
         } catch (error) {
             disp_str = 'nvmonErr (timeout)';
-            console.error('Error getting results from PyNVML. Error: ', error);
+            outputChannel.appendLine(`❌ PyNVML error: ${error}`);
         }
 
         if (res_json == null) {
+            outputChannel.appendLine(`⚠️ Returning error display: ${disp_str}`);
             return disp_str
         }
 
-        let res = JSON.parse(res_json.stdout).nvidia_smi_log;
+        try {
+            let res = JSON.parse(res_json.stdout).nvidia_smi_log;
+            const formattedData = this.formatGpuData(res);
+            return formattedData;
+        } catch (parseError) {
+            outputChannel.appendLine(`❌ JSON parsing error: ${parseError}`);
+            return 'nvmonErr (parse)';
+        }
+    }
+    
+    async getDisplayFromNvidiaSmi(): Promise<string> {
+        let res_xml = null;
+        let disp_str = 'nvmonErr (unknown)';
+
+        try {
+            const timeout = this._config.get('commandTimeoutMs', 2000);
+            const { stdout } = await execa('nvidia-smi', ['-q', '-x'], { timeout });
+            res_xml = { stdout };
+        } catch (error) {
+            disp_str = 'nvmonErr (timeout)';
+            outputChannel.appendLine(`❌ nvidia-smi error: ${error}`);
+        }
+
+        if (res_xml == null) {
+            outputChannel.appendLine(`⚠️ Returning error display: ${disp_str}`);
+            return disp_str
+        }
+
+        try {
+            let res = xml_parser.parse(res_xml.stdout).nvidia_smi_log;
+            const formattedData = this.formatGpuData(res);
+            return formattedData;
+        } catch (parseError) {
+            outputChannel.appendLine(`❌ XML parsing error: ${parseError}`);
+            return 'nvmonErr (parse)';
+        }
+    }
+    
+    formatGpuData(res: any): string {
         let N_gpu = res['attached_gpus'];
         if (N_gpu == 1) {
             res.gpu = [res.gpu];
         }
         
         let show_sum = this._config.get('showSum', false);
+        let disp_str = '';
+        
         if (show_sum) {
             let gpu_util_sum = 0;
             let mem_used_sum = 0;

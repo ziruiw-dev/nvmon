@@ -3,3 +3,6 @@ node_modules
 .vscode-test/
 *.vsix
 private
+.claude
+CLAUDE.md
+TODO.md

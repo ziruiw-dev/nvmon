@@ -2,7 +2,7 @@
     "name": "nvidia-monitor",
     "displayName": "Nvidia Monitor",
     "description": "Displays Nvidia GPU usage in status bar.",
-    "version": "25.5.5",
+    "version": "25.5.28",
     "publisher": "ziruiwang",
     "engines": {
         "vscode": "^1.60.0"
@@ -47,6 +47,11 @@
                     "minimum": 100,
                     "maximum": 5000,
                     "description": "Timeout in milliseconds for the GPU info command. If the command takes longer than this, it will be considered failed."
+                },
+                "nvidiaMonitor.suppressInstallPrompts": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "When true, stops prompting for PyNVML installation. Set automatically when user clicks 'Don't Ask Again'."
                 }
             }
         }
@@ -58,10 +63,11 @@
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "postinstall": "pip install pynvml"
+        "postinstall": "pip3 install pynvml || echo 'Warning: Could not install PyNVML. Extension will fall back to nvidia-smi if available.'"
     },
     "dependencies": {
         "execa": "^5.1.1",
+        "fast-xml-parser": "^4.2.2",
         "glob": "^10.3.10"
     },
     "devDependencies": {
