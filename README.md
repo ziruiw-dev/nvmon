@@ -22,6 +22,7 @@ Multi GPU sum:
 
 ## Known Issues
 - ~~This plug-in might freeze occationally. Reload window should fix it for now (In vscode press `Ctrl/Cmd` + `Shift` + `p` to call command platte and type `reload`). Will dig into this later.~~
+- The plugin could not be installed properly on Windows and some Linux systems when `pip` is unavailable. This happens in version 25.5.5 update. If you have this issue, please manually install version 25.5.2 (see issue #5). Will get it fixed by 30 May.
 
 ## TODO
 - [x] Fix plug-in frozen issue.
