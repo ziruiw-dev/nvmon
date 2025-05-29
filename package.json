@@ -2,7 +2,7 @@
     "name": "nvidia-monitor",
     "displayName": "Nvidia Monitor",
     "description": "Displays Nvidia GPU usage in status bar.",
-    "version": "25.5.28",
+    "version": "25.5.29",
     "publisher": "ziruiwang",
     "engines": {
         "vscode": "^1.60.0"

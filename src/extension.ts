@@ -10,6 +10,9 @@ let python_args: string[] = [];
 let useNvidiaSmi = false;
 let outputChannel: OutputChannel;
 
+// Error state tracking to prevent log flooding
+let isInErrorState = false;
+
 
 async function checkDependencies(): Promise<boolean> {
     outputChannel.appendLine('\n--- Checking GPU Monitoring Dependencies ---');
@@ -286,20 +289,32 @@ class GpuUsage extends Resource {
             res_json = { stdout };
         } catch (error) {
             disp_str = 'nvmonErr (timeout)';
-            outputChannel.appendLine(`❌ PyNVML error: ${error}`);
+            if (!isInErrorState) {
+                outputChannel.appendLine(`❌ PyNVML error: ${error}`);
+                isInErrorState = true;
+            }
         }
 
         if (res_json == null) {
-            outputChannel.appendLine(`⚠️ Returning error display: ${disp_str}`);
+            if (!isInErrorState) {
+                outputChannel.appendLine(`⚠️ Returning error display: ${disp_str}`);
+            }
             return disp_str
         }
 
         try {
             let res = JSON.parse(res_json.stdout).nvidia_smi_log;
             const formattedData = this.formatGpuData(res);
+            if (isInErrorState) {
+                outputChannel.appendLine(`✅ PyNVML recovered successfully`);
+                isInErrorState = false;
+            }
             return formattedData;
         } catch (parseError) {
-            outputChannel.appendLine(`❌ JSON parsing error: ${parseError}`);
+            if (!isInErrorState) {
+                outputChannel.appendLine(`❌ JSON parsing error: ${parseError}`);
+                isInErrorState = true;
+            }
             return 'nvmonErr (parse)';
         }
     }
@@ -314,20 +329,32 @@ class GpuUsage extends Resource {
             res_xml = { stdout };
         } catch (error) {
             disp_str = 'nvmonErr (timeout)';
-            outputChannel.appendLine(`❌ nvidia-smi error: ${error}`);
+            if (!isInErrorState) {
+                outputChannel.appendLine(`❌ nvidia-smi error: ${error}`);
+                isInErrorState = true;
+            }
         }
 
         if (res_xml == null) {
-            outputChannel.appendLine(`⚠️ Returning error display: ${disp_str}`);
+            if (!isInErrorState) {
+                outputChannel.appendLine(`⚠️ Returning error display: ${disp_str}`);
+            }
             return disp_str
         }
 
         try {
             let res = xml_parser.parse(res_xml.stdout).nvidia_smi_log;
             const formattedData = this.formatGpuData(res);
+            if (isInErrorState) {
+                outputChannel.appendLine(`✅ nvidia-smi recovered successfully`);
+                isInErrorState = false;
+            }
             return formattedData;
         } catch (parseError) {
-            outputChannel.appendLine(`❌ XML parsing error: ${parseError}`);
+            if (!isInErrorState) {
+                outputChannel.appendLine(`❌ XML parsing error: ${parseError}`);
+                isInErrorState = true;
+            }
             return 'nvmonErr (parse)';
         }
     }
